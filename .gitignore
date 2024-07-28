@@ -1,0 +1,4 @@
+/node_modules
+oguard.zip
+dist
+/schemas/*.compiled

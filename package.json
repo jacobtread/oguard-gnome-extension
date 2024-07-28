@@ -1,0 +1,20 @@
+{
+  "name": "oguard-battery-indicator",
+  "version": "0.0.0",
+  "description": "GNOME shell extension for an OGuard UPS battery indicator",
+  "main": "extension.js",
+  "scripts": {},
+  "author": "Jacobtread <jacobtread@gmail.com>",
+  "license": "MIT",
+  "type": "module",
+  "devDependencies": {
+    "eslint": "^9.8.0",
+    "eslint-plugin-jsdoc": "^48.8.3",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@girs/gjs": "^4.0.0-beta.14",
+    "@girs/gnome-shell": "^46.0.2"
+  }
+}

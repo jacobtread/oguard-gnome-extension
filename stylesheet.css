@@ -1,0 +1,12 @@
+/* Add your custom extension styling here */
+
+.system-status-icon {
+    width: 22px;
+    height: 22px;
+}
+
+.battery-percentage {
+    margin-left: 4px;
+    font-size: 14px;
+    color: #ffffff; /* Adjust the color if needed */
+}

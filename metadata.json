@@ -1,0 +1,9 @@
+{
+  "name": "OGuard Battery Indicator",
+  "description": "Shows the current battery for the UPS monitored by OGuard",
+  "uuid": "oguard@jacobtread.com",
+  "shell-version": [
+    "46"
+  ],
+  "settings-schema": "org.gnome.shell.extensions.oguard"
+}
