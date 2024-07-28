@@ -66,11 +66,13 @@ export default class OGuardIndicatorExtension extends Extension {
   _updateBatteryStatus() {
     if (this._session === undefined) return;
 
+    // Create get request
     let msg = Soup.Message.new(
       "GET",
       `http://localhost:${this.serverPort}/api/battery-state`
     );
 
+    // Send request and get response in callback
     this._session.send_and_read_async(
       msg,
       GLib.PRIORITY_DEFAULT,
@@ -78,14 +80,17 @@ export default class OGuardIndicatorExtension extends Extension {
       (source, result) => {
         try {
           if (source === null) return;
+
+          // Get the finished response bytes
           const bytes = source.send_and_read_finish(result);
           const dataArray = bytes.get_data();
           if (dataArray === null) return;
 
+          // Convert response to string then JSON
           const responseJSON = new TextDecoder().decode(dataArray);
           const response = JSON.parse(responseJSON);
-          const batteryLevel = response.capacity; // Example field
-          const _batteryRemainingTime = response.remaining_time; // Example field
+          const batteryLevel = response.capacity;
+          const _batteryRemainingTime = response.remaining_time;
           if (this._batteryLabel !== undefined) {
             // Update the label with the battery percentage
             this._batteryLabel.set_text(`${batteryLevel}%`);
