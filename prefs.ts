@@ -25,7 +25,7 @@ export default class GnomeRectanglePreferences extends ExtensionPreferences {
 
     const serverPort = new Adw.SpinRow({
       title: _("Server Port"),
-      subtitle: _("Padding between windows"),
+      subtitle: _("Port the OGuard server is running on"),
       adjustment: new Gtk.Adjustment({
         lower: 1,
         upper: 65535,
