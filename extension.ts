@@ -2,6 +2,7 @@ import St from "gi://St";
 import GLib from "gi://GLib";
 import Clutter from "gi://Clutter";
 import Gio from "gi://Gio";
+import Soup from "gi://Soup?version=3.0";
 
 import {
   Extension,
@@ -19,6 +20,8 @@ export default class OGuardIndicatorExtension extends Extension {
   _indicator?: PanelMenu.Button;
   gsettings?: Gio.Settings;
   serverPort: number = 5439;
+
+  _session?: Soup.Session;
 
   enable(): void {
     this.gsettings = this.getSettings("org.gnome.shell.extensions.oguard");
@@ -55,34 +58,43 @@ export default class OGuardIndicatorExtension extends Extension {
     );
     this._updateBatteryStatus();
 
+    this._session = new Soup.Session();
+
     Main.panel.addToStatusArea(this.uuid, this._indicator);
   }
 
   _updateBatteryStatus() {
-    let [success, stdout, stderr] = GLib.spawn_command_line_sync(
-      `curl -s http://localhost:${this.serverPort}/api/battery-state`
+    if (this._session === undefined) return;
+
+    let msg = Soup.Message.new(
+      "GET",
+      `http://localhost:${this.serverPort}/api/battery-state`
     );
 
-    if (!success || stdout === null) {
-      logError("Failed to fetch battery data: " + stderr);
-      return;
-    }
+    this._session.send_and_read_async(
+      msg,
+      GLib.PRIORITY_DEFAULT,
+      null,
+      (source, result) => {
+        try {
+          if (source === null) return;
+          const bytes = source.send_and_read_finish(result);
+          const dataArray = bytes.get_data();
+          if (dataArray === null) return;
 
-    try {
-      const stdoutText = new TextDecoder("utf-8").decode(stdout);
-      const data = JSON.parse(stdoutText);
-      const batteryLevel = data.capacity; // Example field
-      const _batteryRemainingTime = data.remaining_time; // Example field
-
-      if (this._batteryLabel !== undefined) {
-        // Update the label with the battery percentage
-        this._batteryLabel.set_text(`${batteryLevel}%`);
+          const responseJSON = new TextDecoder().decode(dataArray);
+          const response = JSON.parse(responseJSON);
+          const batteryLevel = response.capacity; // Example field
+          const _batteryRemainingTime = response.remaining_time; // Example field
+          if (this._batteryLabel !== undefined) {
+            // Update the label with the battery percentage
+            this._batteryLabel.set_text(`${batteryLevel}%`);
+          }
+        } catch (e) {
+          logError("Failed to parse battery API response: " + e);
+        }
       }
-    } catch (e) {
-      logError("Failed to parse battery API response: " + e);
-    }
-
-    return true;
+    );
   }
 
   disable() {
