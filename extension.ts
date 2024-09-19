@@ -92,8 +92,12 @@ export default class OGuardIndicatorExtension extends Extension {
           const batteryLevel = response.capacity;
           const _batteryRemainingTime = response.remaining_time;
           if (this._batteryLabel !== undefined) {
-            // Update the label with the battery percentage
-            this._batteryLabel.set_text(`${batteryLevel}%`);
+            if (batteryLevel === undefined) {
+              this._batteryLabel.set_text(`No Device`);
+            } else {
+              // Update the label with the battery percentage
+              this._batteryLabel.set_text(`${batteryLevel}%`);
+            }
           }
         } catch (e) {
           logError("Failed to parse battery API response: " + e);
