@@ -63,10 +63,20 @@ export default class OGuardIndicatorExtension extends Extension {
     Main.panel.addToStatusArea(this.uuid, this._indicator);
   }
 
-  _updateBatteryStatus() {
+  /**
+   * Requests the battery percentage from the OGuard server
+   *
+   * @param success The callback to invoke on success
+   * @param failure The callback to invoke on failure
+   */
+  _requestBattery(
+    success: (capacity: number, remaining_time: number) => void,
+    failure: () => void
+  ) {
+    // Soup session not initialized
     if (this._session === undefined) return;
 
-    // Create get request
+    // Create GET request message
     let msg = Soup.Message.new(
       "GET",
       `http://localhost:${this.serverPort}/api/battery-state`
@@ -79,28 +89,47 @@ export default class OGuardIndicatorExtension extends Extension {
       null,
       (source, result) => {
         try {
-          if (source === null) return;
+          // Source was missing
+          if (source === null) {
+            throw new Error("source missing");
+          }
 
           // Get the finished response bytes
           const bytes = source.send_and_read_finish(result);
           const dataArray = bytes.get_data();
-          if (dataArray === null) return;
+          if (dataArray === null) {
+            throw new Error("data not present");
+          }
 
           // Convert response to string then JSON
           const responseJSON = new TextDecoder().decode(dataArray);
           const response = JSON.parse(responseJSON);
-          const batteryLevel = response.capacity;
-          const _batteryRemainingTime = response.remaining_time;
-          if (this._batteryLabel !== undefined) {
-            if (batteryLevel === undefined) {
-              this._batteryLabel.set_text(`No Device`);
-            } else {
-              // Update the label with the battery percentage
-              this._batteryLabel.set_text(`${batteryLevel}%`);
-            }
+
+          if (response.capacity === undefined) {
+            throw new Error("server gave invalid response");
           }
+
+          success(response.capacity, response.remaining_time);
         } catch (e) {
-          logError("Failed to parse battery API response: " + e);
+          failure();
+        }
+      }
+    );
+  }
+
+  _updateBatteryStatus() {
+    if (this._session === undefined) return;
+
+    this._requestBattery(
+      (capacity, _remaining_time) => {
+        if (this._batteryLabel !== undefined) {
+          // Update the label with the battery percentage
+          this._batteryLabel.set_text(`${capacity}%`);
+        }
+      },
+      () => {
+        if (this._batteryLabel !== undefined) {
+          this._batteryLabel.set_text(`No Device`);
         }
       }
     );
